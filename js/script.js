@@ -1,12 +1,15 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+let bestScore = 0;
 
-canvas.width = innerWidth;
-canvas.height = innerHeight
+canvas.width = 1024;
+canvas.height = 576;
 
 class Player {
     constructor() {
         this.velocity = {x: 0, y: 0};
+
+        this.opacity = 1;
 
         // Image of the player
         const image = new Image();
@@ -24,15 +27,17 @@ class Player {
     }
 
     draw() {
-        // ctx.fillStyle = "red";
-        // ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
 
         ctx.drawImage(
             this.image,
             this.position.x,
             this.position.y,
             this.width,
-            this.height);
+            this.height
+        );
+        ctx.restore();
     }
 
     update() {
@@ -141,7 +146,7 @@ class Invader {
                 },
                 velocity: {
                     x: 0,
-                    y: 5
+                    y: 3
                 }
             })
         );
@@ -171,7 +176,7 @@ class InvaderProjectile {
 class Grid {
     constructor() {
         this.position = {x: 0, y: 0};
-        this.velocity = {x: 10, y: 0};
+        this.velocity = {x: 3, y: 0};
         this.invaders = [];
         const columns = Math.floor(Math.random() * 10 + 5);
         const rows = Math.floor(Math.random() * 5 + 2);
@@ -228,21 +233,29 @@ const keys = {
 
 let frames = 0;
 let randomInteral = Math.floor((Math.random() * 500) + 500);
+let game = {
+    over: false,
+    activate: true,
+}
+let score = 0;
 
-for (let i = 0; i < 100; i++) {
-    particles.push(new Particle({
-        position: {
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height
-        },
-        velocity: {
-            x: 0,
-            y: 1
-        },
-        radius: Math.random() * 3,
-        color: "white",
+backgroundParticles();
 
-    }));
+function backgroundParticles() {
+    for (let i = 0; i < 100; i++) {
+        particles.push(new Particle({
+            position: {
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height
+            },
+            velocity: {
+                x: 0,
+                y: 0.2
+            },
+            radius: Math.random() * 2,
+            color: "white",
+        }));
+    }
 }
 
 
@@ -264,26 +277,54 @@ function createParticles({object, color, fades}) {
     }
 }
 
+
+function menu() {
+    // requestAnimationFrame(menu);
+    // Affichage du menu
+    // set hidden #scoreEl when menu is displayed
+    document.getElementById("score").style.display = "none";
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "white";
+    ctx.font = "30px Arial";
+    ctx.fillText("Press Space to Start", canvas.width / 2 - 150, canvas.height / 2);
+    ctx.fillText("Best Score : " + bestScore, canvas.width / 2 - 125, canvas.height / 2 + 50);
+
+    backgroundParticles();
+    forEachParticles();
+
+}
+
+function forEachParticles() {
+    particles.forEach(particle => {
+        if (particle.position.y - particle.radius >= canvas.height) {
+            particle.position.x = Math.random() * canvas.width;
+            particle.position.y = particle.radius
+        }
+        if (particle.opacity <= 0) {
+            setTimeout(() => {
+                particles.splice(particles.indexOf(particle), 1);
+            }, 0);
+        } else {
+            particle.update();
+        }
+    });
+}
+
 // Animation
 function animate() {
+    if (!game.activate || game.over) {
+        bestScore = score;
+        menu();
+        return;
+    }
     // Loop the animation
     requestAnimationFrame(animate);
     ctx.fillStyle = "black"
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     player.update();
-    particles.forEach(particles => {
-        if (particles.position.y - particles.radius >= canvas.height) {
-            particles.position.x = Math.random() * canvas.width;
-            particles.position.y = particles.radius
-        }
-        if (particles.opacity <= 0) {
-            setTimeout(() => {
-                particles.splice(particles.indexOf(particles), 1);
-            }, 0);
-        } else {
-            particles.update();
-        }
-    });
+    forEachParticles();
+
     invaderProjectiles.forEach(invaderProjectile => {
         if (invaderProjectile.position.y + invaderProjectile.height >= canvas.height) {
             setTimeout(() => {
@@ -297,12 +338,21 @@ function animate() {
         if (invaderProjectile.position.y + invaderProjectile.height >= player.position.y
             && invaderProjectile.position.x + invaderProjectile.width >= player.position.x
             && invaderProjectile.position.x <= player.position.x + player.width) {
+            setTimeout(() => {
+                invaderProjectiles.splice(invaderProjectiles.indexOf(invaderProjectile), 1);
+                player.opacity = 0;
+                game.over = true;
+            }, 0);
+
+            setTimeout(() => {
+                game.activate = false;
+            }, 500);
+
             createParticles({
                 object: player,
                 color: "white",
                 fades: true
             });
-            invaderProjectiles.splice(invaderProjectiles.indexOf(invaderProjectile), 1);
         }
     });
 
@@ -345,11 +395,16 @@ function animate() {
                         const projectileFound = projectiles.find(projectile2 => {
                             return projectile === projectile2;
                         });
+
+                        // remove Invader and Projectile
                         if (invaderFound && projectileFound) {
+                            score += 100
+                            console.log(score)
                             createParticles({
                                 object: invader,
                                 fades: true
                             });
+                            document.getElementById("scoreEl").innerHTML = score;
                             grid.invaders.splice(grid.invaders.indexOf(invader), 1);
                             projectiles.splice(projectiles.indexOf(projectile), 1);
 
@@ -371,9 +426,9 @@ function animate() {
 
     // TODO : Revoir la position droite
     if (keys.q.pressed && (player.position.x + this.width >= canvas.width || player.position.x > 0)) {
-        player.velocity.x = -5;
+        player.velocity.x = -3;
     } else if (keys.d.pressed && player.position.x < window.innerWidth) {
-        player.velocity.x = 5;
+        player.velocity.x = 3;
     } else {
         player.velocity.x = 0;
     }
@@ -390,27 +445,30 @@ function animate() {
 animate();
 
 addEventListener('keydown', ({key}) => {
-    switch (key) {
-        case "q":
-            keys.q.pressed = true;
-            break;
-        case "d":
-            player.velocity.x = 5;
-            keys.d.pressed = true;
-            break;
-        case " ":
-            projectiles.push(
-                new Projectile({
-                    position: {
-                        x: player.position.x + player.width / 2,
-                        y: player.position.y
-                    },
-                    velocity: {
-                        x: 0,
-                        y: -10
-                    }
-                }));
-            break;
+    if (game.over && key === "Enter") {
+        location.reload();
+    } else {
+        switch (key) {
+            case "q":
+                keys.q.pressed = true;
+                break;
+            case "d":
+                keys.d.pressed = true;
+                break;
+            case " ":
+                projectiles.push(
+                    new Projectile({
+                        position: {
+                            x: player.position.x + player.width / 2,
+                            y: player.position.y
+                        },
+                        velocity: {
+                            x: 0,
+                            y: -10
+                        }
+                    }));
+                break;
+        }
     }
 });
 
