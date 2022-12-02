@@ -7,7 +7,7 @@ canvas.height = 576;
 
 class Player {
     constructor() {
-        this.velocity = {x: 0, y: 0};
+        this.velocity = { x: 0, y: 0 };
 
         this.opacity = 1;
 
@@ -50,7 +50,7 @@ class Player {
 
 class Projectile {
 
-    constructor({position, velocity}) {
+    constructor({ position, velocity }) {
         this.position = position;
         this.velocity = velocity;
         this.radius = 5;
@@ -73,7 +73,7 @@ class Projectile {
 
 class Particle {
 
-    constructor({position, velocity, radius, color, fades}) {
+    constructor({ position, velocity, radius, color, fades }) {
         this.position = position;
         this.velocity = velocity;
         this.radius = radius;
@@ -103,8 +103,8 @@ class Particle {
 }
 
 class Invader {
-    constructor({position}) {
-        this.velocity = {x: 0, y: 0};
+    constructor({ position }) {
+        this.velocity = { x: 0, y: 0 };
         // Image of the player
         const image = new Image();
         image.src = "./img/invader.png";
@@ -129,7 +129,7 @@ class Invader {
             this.height);
     }
 
-    update({velocity}) {
+    update({ velocity }) {
         if (this.image) {
             this.draw();
             this.position.x += velocity.x;
@@ -154,7 +154,7 @@ class Invader {
 }
 
 class InvaderProjectile {
-    constructor({position, velocity}) {
+    constructor({ position, velocity }) {
         this.position = position;
         this.velocity = velocity;
         this.width = 3;
@@ -175,8 +175,8 @@ class InvaderProjectile {
 
 class Grid {
     constructor() {
-        this.position = {x: 0, y: 0};
-        this.velocity = {x: 3, y: 0};
+        this.position = { x: 0, y: 0 };
+        this.velocity = { x: 3, y: 0 };
         this.invaders = [];
         const columns = Math.floor(Math.random() * 10 + 5);
         const rows = Math.floor(Math.random() * 5 + 2);
@@ -259,7 +259,7 @@ function backgroundParticles() {
 }
 
 
-function createParticles({object, color, fades}) {
+function createParticles({ object, color, fades }) {
     for (let i = 0; i < 10; i++) {
         particles.push(new Particle({
             position: {
@@ -314,7 +314,7 @@ function forEachParticles() {
 // Animation
 function animate() {
     if (!game.activate || game.over) {
-        bestScore = score;
+        if (score > bestScore) bestScore = score;
         menu();
         return;
     }
@@ -444,7 +444,7 @@ function animate() {
 
 animate();
 
-addEventListener('keydown', ({key}) => {
+addEventListener('keydown', ({ key }) => {
     if (game.over && key === "Enter") {
         location.reload();
     } else {
@@ -473,7 +473,7 @@ addEventListener('keydown', ({key}) => {
 });
 
 
-addEventListener('keyup', ({key}) => {
+addEventListener('keyup', ({ key }) => {
     switch (key) {
         case "q":
             keys.q.pressed = false;
